@@ -49,10 +49,14 @@ setting.splitt = function(str, ptr)
 end
 
 if tileY == 0 then
-    if pnbmode == "up" then
+    if not pnbotherworld then
+        if pnbmode == "up" then
+            tileY = -2
+        elseif pnbmode == "down" then
+            tileY = 2
+        end
+    else
         tileY = -2
-    elseif pnbmode == "down" then
-        tileY = 2
     end
 end
 
