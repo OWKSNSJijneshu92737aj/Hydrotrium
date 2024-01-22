@@ -1,0 +1,1616 @@
+for i, bot in pairs(getBots()) do
+    if getBot().name:upper() == bot.name:upper() then
+        indexbot = i
+    end
+end
+
+tilebreak = {}
+infoid = {}
+strings = ""
+local tileBlock = 0
+local tileSeed = 0
+local tilePack = 0
+local tileJammer = 0
+index = 1
+local setting = {}
+local tileY = 0
+local params = {
+    block = 1,
+    seed = 1,
+    pack = 1,
+    drop = 1,
+    timechecker = os.time(),
+    gaiax = 0,
+    gaiay = 0,
+    utx = 0,
+    uty = 0
+}
+seedX = dropseedX - 1
+seedY = dropseedY - 1
+packX = droppackX - 1
+packY = droppackY - 1
+barisX = posbarisX - 1
+barisY = posbarisY - 1
+blockX = dropblockX - 1
+blockY = dropblockY - 1
+jammerX = dropjammerX - 1
+jammerY = dropjammerY - 1
+seed = block + 1
+
+setting.splitt = function(str, ptr)
+    if not ptr then 
+        ptr = "%s"
+    end
+    local tbl = {}
+    for string in string.gmatch(str, ptr) do
+        table.insert(tbl, string) 
+    end
+    return tbl
+end
+
+if tileY == 0 then
+    if pnbmode == "up" then
+        tileY = -2
+    elseif pnbmode == "down" then
+        tileY = 2
+    end
+end
+
+setting.punchitem = function(x,y)
+    for _,tilepunch in pairs(tilebreak) do
+        if getTile(x + tilepunch,y + tileY).fg ~= 0 or getTile(x + tilepunch,y + tileY).bg ~= 0 then
+            return true
+        end
+    end
+    return false
+end
+
+for x = math.floor(pnbtile/2),1,-1 do
+    x = x * -1
+    table.insert(tilebreak,x)
+end
+
+for x = 0, math.ceil(pnbtile/2) - 1 do
+    table.insert(tilebreak,x)
+end
+
+setting.placeitem = function(x,y)
+    for _,tileplace in pairs(tilebreak) do
+        if getTile(x + tileplace,y + tileY).fg == 0 and getTile(x+tileplace,y + tileY).bg == 0 then
+            return true
+        end
+    end
+    return false
+end
+
+setting.recycles = function()
+    for i, trash in ipairs(trashList) do
+        if findItem(trash) > amount then
+			sendPacket("action|trash\n|itemID|" .. trash,2)
+			sleep(4000)
+			sendPacket("action|dialog_return\ndialog_name|trash_item\nitemID|" .. trash .. "|\ncount|" .. findItem(trash),2)
+			sleep(4000)
+        end
+    end
+end
+
+setting.itemFloat = function(id)
+	count = 0
+	for _, obj in pairs(getObjects()) do
+		if obj.id == id then
+			count = count + obj.count
+		end
+	end
+	return count
+end
+
+
+setting.botstatus = function()
+    str = ""
+    for _, bot in pairs(getBots()) do
+        str = str.."\n"..""..(string.upper(bot.name)).."" 
+    end
+    return str
+end
+
+setting.botworld = function()
+    str = ""
+    for _, bot in pairs(getBots()) do
+        str = str.."\n"..""..(string.upper(bot.world)).."" 
+    end
+    return str
+end
+
+setting.botnotif = function()
+    str = ""
+    for _, bot in pairs(getBots()) do
+        str = str.."\n"..""..(string.upper(bot.status)).."" 
+    end
+    return str
+end
+
+setting.blockstorage = function()
+    strings = ""
+	for i = 1, #storageblock do
+        strings = strings.."\nStorage Blocks - "..i.." : "..(infoid[storageblock[i]] or "Undefined")..""
+    end
+    return strings
+end
+
+setting.seedstorage = function()
+    strings = ""
+	for i = 1, #storageseed do
+        strings = strings.."\nStorage Seed - "..i.." : "..(infoid[storageseed[i]] or "Undefined")..""
+    end
+    return strings
+end
+
+setting.packstorage = function()
+    strings = ""
+	for i = 1, #storagepack do
+        strings = strings.."\nStorage Pack - "..i.." : "..(infoid[storagepack[i]] or "Undefined")..""
+    end
+    return strings
+end
+
+setting.writeFile = function(info,text)
+    local file = io.open(""..info..".txt","a")
+    file:write(text.."\n")
+    file:close()
+end
+
+setting.genworld = function()
+    local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    local withnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local generate = ""
+    for i = 1,letter do
+        local random = math.random(1,#alphabet)
+        local randomnumber = math.random(1,#withnum)
+        local acakalpa = string.sub(alphabet,random,random)
+        local acaknomor = string.sub(withnum,randomnumber,randomnumber)
+        if withnumber then
+            generate = generate..acaknomor
+        else
+            generate = generate..acakalpa
+        end
+    end
+    return generate
+end
+local find = setting.genworld()
+
+setting.botgems = function()
+    local count = 0
+    for _,bot in pairs(getBots()) do
+        count = count + bot.gems
+    end
+    return count
+end
+
+setting.botinfo = function(content)
+	if webhookstatus then
+		text = [[
+			$webHookUrl = "]]..webhookstatuslink..[["
+			$payload = @{
+				content = "]]..content..[["
+			}
+			[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+			Invoke-RestMethod -Uri $webHookUrl -Body ($payload | ConvertTo-Json -Depth 4) -Method Post -ContentType "application/json"
+		]]
+		local file = io.popen("powershell -command -", "w")
+		file:write(text)
+		file:close()
+	end
+end
+
+setting.goodtimes = function(estimates)
+    local seconds = tonumber(estimates)
+    if seconds <= 0 then
+        return "00:00:00";
+    else
+        hours = string.format("%02.f", math.floor(estimates/3600));
+        minutes = string.format("%02.f", math.floor(estimates/60 - (hours*60)));
+        seconds = string.format("%02.f", math.floor(estimates - hours*3600 - minutes *60));
+        return ""..hours.." : "..minutes.." : "..seconds
+    end
+end
+
+setting.webhookinfo = function()
+	if botinfo then
+        local text = [[
+            $webHookUrl = "]]..linkbotinfo..[[/messages/]]..messageidbotinfo..[["
+            $payload = @{
+                username = "Debra's"
+                embeds = @(
+                    @{
+                        title = "BOT STATICS"
+                        color = "]]..math.random(111111,999999)..[["
+                        fields = @(
+                            @{
+                                name = "TOTAL GEMS & RUNTIME"
+                                value = "]]..""..setting.botgems().." | "..setting.goodtimes(os.difftime(os.time(),params.timechecker))..""..[["
+                                inline = "false"
+                            }
+                            @{
+                                name = "GrowID"
+                                value = "]]..setting.botstatus()..[["
+                                inline = "true"
+                            }
+                            @{
+                                name = "WORLD"
+                                value = "]]..setting.botworld()..[["
+                                inline = "true"
+                            }
+                            @{
+                                name = "STATUS"
+                                value = "]]..setting.botnotif()..[["
+                                inline = "true"
+                            }
+                        )
+                        footer = @{
+                            text = "PNB Script`n[Hydrotrium] Caramoy's`nLast update : ]]..(os.date("!%a %b %d, %Y at %I:%M %p", os.time() + 7 * 60 * 60))..[["
+                        }
+                    }
+                )
+            }
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-RestMethod -Uri $webHookUrl -Body ($payload | ConvertTo-Json -Depth 4) -Method Patch -ContentType 'application/json'
+        ]]
+        local pipe = io.popen("powershell -command -", "w")
+        pipe:write(text)
+        pipe:close()
+    end
+end
+
+setting.storageinfo = function()
+	if infostorage then
+        local text = [[
+            $webHookUrl = "]]..linkinfostorage..[[/messages/]]..messageidinfostorage..[["
+            $payload = @{
+                username = "Debra's"
+                embeds = @(
+                    @{
+                        title = "STORAGE STATICS"
+                        color = "]]..math.random(111111,999999)..[["
+                        fields = @(
+                            @{
+                                name = ""
+                                value = "]]..setting.blockstorage()..[["
+                                inline = "false"
+                            }
+                            @{
+                                name = ""
+                                value = "]]..setting.seedstorage()..[["
+                                inline = "false"
+                            }
+                            @{
+                                name = ""
+                                value = "]]..setting.packstorage()..[["
+                                inline = "false"
+                            }
+                        )
+                        footer = @{
+                            text = "PNB Script`n[Hydrotrium] Caramoy's`nLast update : ]]..(os.date("!%a %b %d, %Y at %I:%M %p", os.time() + 7 * 60 * 60))..[["
+                        }
+                    }
+                )
+            }
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-RestMethod -Uri $webHookUrl -Body ($payload | ConvertTo-Json -Depth 4) -Method Patch -ContentType 'application/json'
+        ]]
+        local pipe = io.popen("powershell -command -", "w")
+        pipe:write(text)
+        pipe:close()
+    end
+end
+
+setting.reconnect = function(world,id,x,y)
+    if getBot().world == "EXIT" and getBot().status == "online" then 
+        setting.botinfo("[ "..getBot().name.." ] at EXIT, trying to joining world again @everyone")
+        local count = 0
+        while getBot().world ~= world:upper() do
+            sendPacket("action|join_request\nname|"..world:upper().."\ninvitedWorld|0",3)
+            sleep(delaywarp)
+            if getBot().world ~= world:upper() then 
+                count = count + 1
+                if count > 5 then
+                    setting.botinfo("[ "..getBot().name.." ] Failed to joining world again, terminated script @everyone")
+                    error()
+                end
+            end
+        end
+        if id ~= "" then
+            local stucks = 0
+            while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                sendPacket("action|join_request\nname|" ..world:upper().."|"..id:upper().."\ninvitedWorld|0", 3)
+                sleep(delaywarp)
+                if stucks > 3 then
+                    setting.botinfo("[ "..getBot().name.." ] Failed to reconnecting bot, stuck at white door. Terminated script @everyone")
+                    error()
+                end
+            end
+        end
+        if x and y then
+            while math.floor(getBot().x / 32) ~= x or math.floor(getBot().y / 32) ~= y do
+                findPath(x,y)
+                sleep(150)
+            end
+        end
+        setting.botinfo("[ "..getBot().name.." ] success to joining world @everyone")
+    end
+    if getBot().status ~= "online" then
+        setting.botinfo("[ "..getBot().name.." ] status is "..getBot().status.." @everyone")
+        while getBot().status ~= "online" do
+            connect()
+            sleep(delayreconnect)
+            if getBot().status == "suspended" or getBot().status == "banned" then
+                setting.botinfo("[ "..getBot().name.." ] status is "..getBot().status..", removing bot @everyone")
+                error()
+            end
+        end
+        local counts = 0
+        while getBot().world ~= world:upper() do
+            sendPacket("action|join_request\nname|"..world:upper().."\ninvitedWorld|0",3)
+            sleep(delaywarp)
+            if getBot().world ~= world:upper() then 
+                counts = counts + 1
+                if counts > 5 then
+                    setting.botinfo("[ "..getBot().name.." ] Failed to joining world again, terminated script @everyone")
+                    error()
+                end
+            end
+        end
+        if id ~= "" then
+            local stucks = 0
+            while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                sendPacket("action|join_request\nname|" ..world:upper().."|"..id:upper().."\ninvitedWorld|0", 3)
+                sleep(delaywarp)
+                if stucks > 3 then
+                    setting.botinfo("[ "..getBot().name.." ] Failed to reconnecting bot, stuck at white door. Terminated script @everyone")
+                    error()
+                end
+            end
+        end
+        if x and y then
+            while math.floor(getBot().x / 32) ~= x or math.floor(getBot().y / 32) ~= y do
+                findPath(x,y)
+                sleep(150)
+            end
+        end
+        setting.botinfo("[ "..getBot().name.." ] status is "..getBot().status.." @everyone")
+    end
+    if getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 then
+        setting.botinfo("[ "..getBot().name.." ] Stuck at white door ! @everyone")
+        if id ~= "" then
+            local stucks = 0
+            while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                sendPacket("action|join_request\nname|" ..world:upper().."|"..id:upper().."\ninvitedWorld|0", 3)
+                sleep(delaywarp)
+                if stucks > 3 then
+                    setting.botinfo("[ "..getBot().name.." ] Failed to reconnecting bot, stuck at white door. Terminated script @everyone")
+                    error()
+                end
+            end
+        end
+        if x and y then
+            while math.floor(getBot().x / 32) ~= x or math.floor(getBot().y / 32) ~= y do
+                findPath(x,y)
+                sleep(150)
+            end
+        end
+        setting.botinfo("[ "..getBot().name.." ] Already back to pos ! @everyone")
+    end
+end
+
+setting.warp = function(world,door,cooldown)
+    name = world
+    if door ~= "" then
+        name = name .. "|" ..door
+    end
+    if getBot().world ~= string.upper(world) then
+        addHook("onvariant","nuked",function (varlist)
+            if varlist[0] == "OnConsoleMessage" then
+                if string.find(varlist[1],"inaccessible.") or string.find(varlist[1],"level") then
+                    nuked = true
+                end
+                if string.find(varlist[1],"experiencing") then
+                    subserver = true
+                end
+            end
+        end)
+        while getBot().world ~= string.upper(world) and not nuked and not subserver do
+            while getBot().status ~= "online" do
+                connect()
+                sleep(delayreconnect)
+                if getBot().status == "suspended" or getBot().status == "banned" then
+                    setting.botinfo("[ "..getBot().name.." ] status is "..getBot().status..", removing bot @everyone")
+                    error()
+                end
+            end
+            sendPacket("action|join_request\nname|"..name.."\ninvitedWorld|0",3)
+            sleep(cooldown)
+        end
+        removeHooks()
+        sleep(2000)
+    end
+    if getBot().world == string.upper(world) then
+        if door ~= "" then
+            local stuck = 0
+            while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 and not wrong do
+                while getBot().status ~= "online" do
+                    connect()
+                    sleep(delayreconnect)
+                    if getBot().status == "suspended" or getBot().status == "banned" then
+                        setting.botinfo("[ "..getBot().name.." ] status is "..getBot().status..", removing bot @everyone")
+                        error()
+                    end
+                end
+                sendPacket("action|join_request\nname|"..name.."\ninvitedWorld|0",3)
+                sleep(cooldown)
+                stuck = stuck + 1
+                if stuck == 5 then
+                    wrong = true
+                end
+            end
+        end
+        for i, tile in pairs(getTiles()) do
+            if getTile(tile.x,tile.y).extra == 16 then
+                fire = true
+            end
+        end
+    end
+end
+
+setting.takepickaxe = function()
+    ::BACK::
+    world = setting.splitt(worldpickaxe[index],"[^:]+")[1]
+    door = setting.splitt(worldpickaxe[index],"[^:]+")[2]
+    setJob("Take pickaxe")
+    setting.warp(world,door,delaywarp)
+    if not subserver then
+        if not nuked then
+            if not wrong then
+                if setting.itemFloat(98) > 0 then
+                    for _, obj in pairs(getObjects()) do
+                        if obj.id == 98 then
+                            findPath(math.floor(obj.x / 32),math.floor(obj.y / 32))
+                            sleep(1000)
+                            collect(2)
+                            sleep(1000)
+                            setting.reconnect(world,door,math.floor(obj.x / 32),math.floor(obj.y / 32))
+                        end
+                        if findItem(98) > 0  then
+                            break
+                        end
+                    end
+                    wear(98)
+                    sleep(500)
+                    move(-1,0)
+                    sleep(1000)
+                    drop(98,findItem(98) - 1)
+                    sleep(1000)
+                end
+            else
+                wrong = false
+                sleep(5000)
+                print("Id door world take support items is wrong, check ur id door !!")
+                setting.botinfo("Id door world take support items is wrong, check ur id door !, terminated script @everyone")
+                error()
+            end
+        else
+            nuked = false
+            sleep(5000)
+            print("World take support items is nuked, check ur world !!")
+            setting.botinfo("World take support items is nuked, check ur world !, terminated script @everyone")
+            error()
+        end
+    else
+        subserver = false
+        sleep(5000)
+        print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+        setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+        sleep(120000)
+        goto BACK
+    end
+end
+
+setting.buying = function()
+    setJob("Buying packs")
+    if findItem(112) >= mingems then
+        while findItem(112) >= pricepack do
+            if upbackpack then
+                while getBot().slots < 36 do
+                    sendPacket("action|buy\nitem|upgrade_backpack",2)
+                    sleep(4000)
+                end
+            end
+            sendPacket("action|buy\nitem|"..debug,2)
+            sleep(2000)
+            if findItem(packList[1]) >= 200 then
+                break
+            end
+        end
+    end
+end
+
+setting.storingpacks = function()
+    for i = params.pack , #storagepack do
+        ::Here::
+        setJob("Dropping packs")
+        world = storagepack[i]
+        setting.warp(world,doorstoragepack,delaywarp)
+        setting.webhookinfo()
+        if not subserver then
+            if not nuked then
+                if not wrong then
+                    if setting.itemFloat(packList[1]) >= limitpack then
+                        infoid[world] = "["..setting.itemFloat(packList[1]).."] LIMIT !!!"
+                        setting.botinfo("Packs storage : [ ||"..world.."|| ] has reached limit, skipped world @everyone")
+                        print("Packs storage : [ "..world.." ] has reached limit, skipped world")
+                        params.pack = params.pack + 1
+                        if params.pack > #storagepack then
+                            infoid[world] = "["..setting.itemFloat(packList[1]).."] LIMIT !!!"
+                            setting.botinfo("All packs storage has reached limit, Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                            print("All packs storage has reached limit, Removing bot : [ "..getBot().name.." ]")
+                            setting.warp(find,"",delaywarp)
+                            if removingbot then
+                                removeBot(getBot().name)
+                                sleep(2000)
+                            end
+                            error()
+                        end
+                        tilePack = 0
+                    else
+                        for y,pack in pairs(packList) do
+                            for i,tile in pairs(getTiles()) do
+                                if separated then
+                                    if tile.fg == 0 or tile.bg == 0 then
+                                        ::BACK::
+                                        findPath(packX + (tilePack),packY - (y-1))
+                                        sleep(1000)
+                                        local count = 0
+                                        setting.reconnect(world,doorstoragepack,packX + (tilePack),packY - (y-1))
+                                        if packX + (tilePack) >= 98 then
+                                            packY = packY - 1
+                                            tilePack = 0
+                                        end
+                                        while findItem(pack) > 0 do
+                                            drop(pack)
+                                            sleep(delaydrop)
+                                            setting.reconnect(world,doorstoragepack,packX + (tilePack),packY - (y-1))
+                                            count = count + 1
+                                            if count >= 2 then
+                                                tilePack = tilePack + 1
+                                                goto BACK
+                                            end
+                                        end
+                                    end
+                                    if findItem(pack) == 0 then
+                                        break
+                                    end
+                                else
+                                    if tile.fg == 0 or tile.bg == 0 then
+                                        ::BACK::
+                                        findPath(packX + (tilePack),packY)
+                                        sleep(1000)
+                                        local count = 0
+                                        setting.reconnect(world,doorstoragepack,packX + (tilePack),packY)
+                                        if packX + (tilePack) >= 98 then
+                                            packY = packY - 1
+                                            tilePack = 0
+                                        end
+                                        while findItem(pack) > 0 do
+                                            drop(pack)
+                                            sleep(delaydrop)
+                                            setting.reconnect(world,doorstoragepack,packX + (tilePack),packY)
+                                            count = count + 1
+                                            if count >= 2 then
+                                                tilePack = tilePack + 1
+                                                goto BACK
+                                            end
+                                        end
+                                    end
+                                    if findItem(pack) == 0 then
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                        sleep(100)
+                        break
+                    end
+                else
+                    infoid[world] = "WRONG DOOR !!!"
+                    wrong = false
+                    sleep(5000)
+                    print("[ "..world.." ] Id door packs storage is wrong, check ur id door!")
+                    setting.botinfo("[ ||"..world.."|| ] Id door packs storage is wrong, check ur id door! @everyone")
+                    params.pack = params.pack + 1
+                    if params.pack > #storagepack then
+                        print("All packs storage has reached limit")
+                        setting.botinfo("All packs storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                        if removingbot then
+                            removeBot(getBot().name)
+                            sleep(2000)
+                        end
+                        error()
+                    end
+                    tilePack = 0
+                end
+            else
+                infoid[world] = "NUKED !!!"
+                nuked = false
+                sleep(5000)
+                print("[ "..world.." ] packs Storage is NUKED, check ur storage!")
+                setting.botinfo("[ "..world.." ] packs Storage is NUKED, check ur storage! @everyone")
+                params.pack = params.pack + 1
+                if params.pack > #storagepack then
+                    print("All packs storage has reached limit!")
+                    setting.botinfo("All packs storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                    if removingbot then
+                        removeBot(getBot().name)
+                        sleep(2000)
+                    end
+                    error()
+                end
+                tilePack = 0
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto Here
+        end
+    end
+    infoid[world] = "["..setting.itemFloat(packList[1]).."]"
+    setting.storageinfo()
+end
+
+setting.storingseeds = function()
+    for i = params.seed, #storageseed do
+        ::Here::
+        setJob("Dropping seeds")
+        world = storageseed[i]
+        setting.warp(world,doorstorageseed,delaywarp)
+        setting.webhookinfo()
+        if not subserver then
+            if not nuked then
+                if not wrong then
+                    if setting.itemFloat(seed) >= limitseed then
+                        infoid[world] = "["..setting.itemFloat(seed).."] LIMIT !!!"
+                        setting.botinfo("Seeds storage : [ ||"..world.."|| ] has reached limit, skipped world @everyone")
+                        print("Seeds storage : [ "..world.." ] has reached limit, skipped world")
+                        params.seed = params.seed + 1
+                        if params.seed > #storageseed then
+                            infoid[world] = "["..setting.itemFloat(seed).."] LIMIT !!!"
+                            setting.botinfo("All seeds storage has reached limit, Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                            print("All seeds storage has reached limit, Removing bot : [ "..getBot().name.." ] @everyone")
+                            if pnbotherworld then
+                                setting.warp(find,"",delaywarp)
+                                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                                    move(1,0)
+                                    sleep(500)
+                                end
+                                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) - 1).fg == 226 do
+                                    punch(0,-1)
+                                    sleep(delaypunch)
+                                    setting.reconnect(find,"")
+                                end
+                                setting.storingjammer()
+                            end
+                            setting.warp(find,"",delaywarp)
+                            if removingbot then
+                                removeBot(getBot().name)
+                                sleep(2000)
+                            end
+                            error()
+                        end
+                        tileSeed = 0
+                    else
+                        for i,tile in pairs(getTiles()) do
+                            if tile.fg == 0 or tile.bg == 0 then
+                                ::BACK::
+                                findPath(seedX + (tileSeed),seedY)
+                                sleep(1000)
+                                local count = 0
+                                setting.reconnect(world,doorstorageseed,seedX + (tileSeed),seedY)
+                                if seedX + (tileSeed) >= 98 then
+                                    seedY = seedY - 1
+                                    tileSeed = 0
+                                end
+                                while findItem(seed) > 0 do
+                                    drop(seed)
+                                    sleep(delaydrop)
+                                    setting.reconnect(world,doorstorageseed,seedX + (tileSeed),seedY)
+                                    count = count + 1
+                                    if count >= 2 then
+                                        tileSeed = tileSeed + 1
+                                        goto BACK
+                                    end
+                                end
+                            end
+                            if findItem(seed) == 0 then
+                                break
+                            end
+                        end
+                        sleep(100)
+                        break
+                    end
+                else
+                    infoid[world] = "WRONG DOOR !!!"
+                    wrong = false
+                    sleep(5000)
+                    print("[ "..world.." ] Id door seeds storage is wrong, check ur id door!")
+                    setting.botinfo("[ ||"..world.."|| ] Id door seeds storage is wrong, check ur id door! @everyone")
+                    params.seed = params.seed + 1
+                    if params.seed > #storageseed then
+                        print("All seeds storage has reached limit")
+                        setting.botinfo("All seeds storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                        if removingbot then
+                            removeBot(getBot().name)
+                            sleep(2000)
+                        end
+                        error()
+                    end
+                    tileSeed = 0
+                end
+            else
+                infoid[world] = "NUKED !!!"
+                nuked = false
+                sleep(5000)
+                print("[ "..world.." ] seeds Storage is NUKED, check ur storage!")
+                setting.botinfo("[ "..world.." ] seeds Storage is NUKED, check ur storage! @everyone")
+                params.seed = params.seed + 1
+                if params.seed > #storageseed then
+                    print("All seeds storage has reached limit!")
+                    setting.botinfo("All seeds storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                    if removingbot then
+                        removeBot(getBot().name)
+                        sleep(2000)
+                    end
+                    error()
+                end
+                tileSeed = 0
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto Here
+        end
+    end
+    infoid[world] = "["..setting.itemFloat(seed).."]"
+    setting.storageinfo()
+end
+
+setting.take = function()
+    for i = params.block, #storageblock do
+        ::Here::
+        setJob("Take blocks")
+		world = storageblock[i]
+        setting.warp(world,doorstorageblock,delaywarp)
+        setting.webhookinfo()
+        if not subserver then
+            if not nuked then
+                if not wrong then
+                    if setting.itemFloat(block) == 0 then
+                        infoid[world] = ""..setting.itemFloat(block).." EMPTY !!"
+                        setting.botinfo("Take blocks storage : [ ||"..world.."|| ] has empty, skipped world @everyone")
+                        print("Take blocks storage : [ "..world.." ] has empty, skipped world")
+                        params.block = params.block + 1
+                        if params.block > #storageblock then
+                            infoid[world] = ""..setting.itemFloat(block).." EMPTY !!"
+                            setting.botinfo("All take blocks storage has empty, Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                            print("All take blocks storage has empty, Removing bot : [ "..getBot().name.." ]")
+                            setting.storingseeds()
+                            if pnbotherworld then
+                                setting.warp(find,"",delaywarp)
+                                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                                    move(1,0)
+                                    sleep(500)
+                                end
+                                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) - 1).fg == 226 do
+                                    punch(0,-1)
+                                    sleep(delaypunch)
+                                    setting.reconnect(find,"")
+                                end
+                                setting.storingjammer()
+                            end
+                            setting.warp(find,"",delaywarp)   
+                            if removingbot then
+                                removeBot(getBot().name)
+                                sleep(2000)
+                            end
+                            setJob("Blocks empty")
+                            error()
+                        end
+                    else
+                        for _, object in pairs(getObjects()) do
+                            if object.id == block then
+                                findPath(math.floor((object.x)/32), math.floor((object.y)/32))
+                                sleep(1000)
+                                collect(2,112)
+                                sleep(1000)
+                                setting.reconnect(world,doorstorageblock,math.floor((object.x)/32), math.floor((object.y)/32))
+                            end
+                            if findItem(block) >= pnbtile then
+                                break
+                            end
+                        end
+                        sleep(100)
+                        break
+                    end
+                else
+                    infoid[world] = "WRONG DOOR !!!"
+                    wrong = false
+                    sleep(5000)
+                    print("[ "..world.." ] Id door Take blocks storage is wrong, check ur id door!")
+                    setting.botinfo("[ ||"..world.."|| ] Id door Take blocks storage is wrong, check ur id door! @everyone")
+                    params.block = params.block + 1
+                    if params.block > #storageblock then
+                        print("All Take blocks storage has reached limit")
+                        setting.botinfo("All Take blocks storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                        if removingbot then
+                            removeBot(getBot().name)
+                            sleep(2000)
+                        end
+                        error()
+                    end
+                end
+            else
+                infoid[world] = "NUKED !!!"
+                nuked = false
+                sleep(5000)
+                print("[ "..world.." ] take blocks Storage is NUKED, check ur storage!")
+                setting.botinfo("[ "..world.." ] take blocks Storage is NUKED, check ur storage! @everyone")
+                params.block = params.block + 1
+                if params.block > #storageblock then
+                    print("All take blocks storage has reached limit!")
+                    setting.botinfo("All take blocks storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                    if removingbot then
+                        removeBot(getBot().name)
+                        sleep(2000)
+                    end
+                    error()
+                end
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto Here
+        end
+    end
+    infoid[world] = "["..setting.itemFloat(block).."]"
+    setting.storageinfo()
+    setting.recycles()
+    setting.line()
+end
+
+setting.storingblocks = function()
+    for i = params.drop , #storageblock do
+        ::Here::
+        world = storageblock[i]
+        setJob("Dropping Blocks")
+        setting.warp(world,doorstorageblock,delaywarp)
+        setting.webhookinfo()
+        if not subserver then
+            if not nuked then
+                if not wrong then
+                    for i,tile in pairs(getTiles()) do
+                        if tile.fg == 0 or tile.bg == 0 then
+                            ::BACK::
+                            findPath(blockX + (tileBlock),blockY)
+                            sleep(1000)
+                            local count = 0
+                            setting.reconnect(world,doorstorageblock,blockX + (tileBlock),blockY)
+                            if blockX + (tileBlock) >= 98 then
+                                blockY = blockY - 1
+                                tileBlock = 0
+                            end
+                            while findItem(block) > 0 do
+                                drop(block)
+                                sleep(delaydrop)
+                                setting.reconnect(world,doorstorageblock,blockX + (tileBlock),blockY)
+                                count = count + 1
+                                if count >= 2 then
+                                    tileBlock = tileBlock + 1
+                                    goto BACK
+                                end
+                            end
+                        end
+                        if findItem(block) == 0 then
+                            break
+                        end
+                    end
+                    sleep(100)
+                    break
+                else
+                    infoid[world] = "WRONG DOOR !!!"
+                    wrong = false
+                    sleep(5000)
+                    print("[ "..world.." ] Id door blocks storage is wrong, check ur id door!")
+                    setting.botinfo("[ ||"..world.."|| ] Id door blocks storage is wrong, check ur id door! @everyone")
+                    params.drop = params.drop + 1
+                    if params.drop > #storageblock then
+                        print("All blocks storage has reached limit")
+                        setting.botinfo("All blocks storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                        if removingbot then
+                            removeBot(getBot().name)
+                            sleep(2000)
+                        end
+                        error()
+                    end
+                    tileBlock = 0
+                end
+            else
+                infoid[world] = "NUKED !!!"
+                nuked = false
+                sleep(5000)
+                print("[ "..world.." ] blocks Storage is NUKED, check ur storage!")
+                setting.botinfo("[ "..world.." ] blocks Storage is NUKED, check ur storage! @everyone")
+                params.drop = params.drop + 1
+                if params.drop > #storageblock then
+                    print("All blocks storage has reached limit!")
+                    setting.botinfo("All blocks storage has reached limit! Removing bot : [ ||"..getBot().name.."|| ] @everyone")
+                    if removingbot then
+                        removeBot(getBot().name)
+                        sleep(2000)
+                    end
+                    error()
+                end
+                tileBlock = 0
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto Here
+        end
+    end
+    infoid[world] = "["..setting.itemFloat(block).."]"
+    setting.storageinfo()
+end
+
+setting.line = function()
+    setting.param = 0
+    setJob("Set up Line")
+    if not pnbotherworld then
+        ::Here::
+        world = setting.splitt(worldpnb[index],"[^:]+")[1]
+        door = setting.splitt(worldpnb[index],"[^:]+")[2]
+        setting.warp(world,door,delaywarp)
+        setting.webhookinfo()
+        if not subserver then
+            if not nuked then
+                if not wrong then
+                    if setting.itemFloat(112) >= limitgems then
+                        if findItem(block) > 0 then
+                            setting.storingblocks()
+                        end
+                        if findItem(seed) > 0 then
+                            setting.storingseeds()
+                        end
+                        setting.warp(find,"",delaywarp)
+                        if removingbot then
+                            setting.botinfo("Gems at world pnb has reached limit")
+                            print("Gems at world pnb has reached limit")
+                            removeBot(getBot().name)
+                            sleep(2000)
+                        end
+                        error()
+                    else
+                        if not withgaut then
+                            if pnbtile == 1 then
+                                setting.botline = pnbtile + 3
+                                for _,tile in pairs(getTiles()) do
+                                    for strs,bot in pairs(getBots()) do
+                                        if bot.name == getBot().name then
+                                            findPath(barisX - setting.param,barisY)
+                                            sleep(1000)
+                                            setting.reconnect(world,door,barisX,barisY)
+                                            break
+                                        else
+                                            setting.param = setting.param + setting.botline
+                                        end
+                                    end
+                                    break
+                                end
+                            else
+                                setting.botline = pnbtile + 1
+                                for _,tile in pairs(getTiles()) do
+                                    for strs,bot in pairs(getBots()) do
+                                        if bot.name == getBot().name then
+                                            findPath(barisX - setting.param,barisY)
+                                            sleep(1000)
+                                            setting.reconnect(world,door,barisX,barisY)
+                                            break
+                                        else
+                                            setting.param = setting.param + setting.botline
+                                        end
+                                    end
+                                    break
+                                end
+                            end
+                        else
+                            setting.botline = pnbtile
+                            for _,tile in pairs(getTiles()) do
+                                for strs,bot in pairs(getBots()) do
+                                    if bot.name == getBot().name then
+                                        findPath(barisX - setting.param,barisY)
+                                        sleep(1000)
+                                        setting.reconnect(world,door,barisX,barisY)
+                                        break
+                                    else
+                                        setting.param = setting.param + setting.botline
+                                    end
+                                end
+                                break
+                            end
+                        end
+                    end
+                else
+                    wrong = false
+                    sleep(5000)
+                    setting.botinfo("World pnb : [ ||"..world.."|| ] is Wrong door, terminated script @everyone")
+                    print("World pnb : [ "..world.." ] is Wrong door, terminated script")
+                    error()
+                end
+            else
+                nuked = false
+                sleep(5000)
+                setting.botinfo("World pnb : [ ||"..world.."|| ] is NUKED @everyone")
+                print("World pnb : [ "..world.." ] is NUKED, terminated script")
+                error()
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto Here
+        end
+        setting.pnb(world,door)
+    else
+        ::Here::
+        botX = math.floor(getBot().x / 32)
+        botY = math.floor(getBot().y / 32)
+        setting.warp(find,"",delaywarp)
+        setting.webhookinfo()
+        if not subserver then
+            if not nuked then
+                if not wrong then
+                    for _, tile in pairs(getTiles()) do
+                        if tile.fg == 226 then
+                            findPath(tile.x,tile.y - 1)
+                            sleep(100)
+                            setting.reconnect(find,"",tile.x,tile.y - 1)
+                        end
+                    end
+                    setting.pnb(find,"")
+                else
+                    wrong = false
+                    sleep(5000)
+                    setting.botinfo("World pnb : [ ||"..world.."|| ] is Wrong door, terminated script @everyone")
+                    print("World pnb : [ "..world.." ] is Wrong door, terminated script")
+                    error()
+                end
+            else
+                nuked = false
+                sleep(5000)
+                setting.botinfo("World pnb : [ ||"..world.."|| ] is NUKED @everyone")
+                print("World pnb : [ "..world.." ] is NUKED, terminated script")
+                error()
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto Here
+        end
+    end
+    if not withgaut then
+        if storeseedafterpnb then
+            setting.storingseeds()
+            setting.take()
+        else
+            setting.take()
+        end
+    else
+        world = setting.splitt(worldpnb[index],"[^:]+")[1]
+        door = setting.splitt(worldpnb[index],"[^:]+")[2]
+        for _, obj in pairs(getObjects()) do
+            if obj.id == seed then
+                findPath(math.floor(obj.x / 32),math.floor(obj.y / 32))
+                sleep(1000)
+                collect(2,112)
+                sleep(1000)
+                setting.reconnect(world,door,math.floor(obj.x / 32),math.floor(obj.y / 32))
+            end
+        end
+        if findItem(seed) > 0 then
+            setting.storingseeds()
+            setting.take()
+        else
+            setting.take()
+        end
+    end
+end
+
+setting.storingjammer = function()
+    ::BACK::
+    setJob("Storing jammer")
+    world = setting.splitt(worldjammer[index],"[^:]+")[1]
+    door = setting.splitt(worldjammer[index],"[^:]+")[2]
+    setting.warp(world,door,delaywarp)
+    setting.webhookinfo()
+    if not subserver then
+        if not nuked then
+            if not wrong then
+                for i,tile in pairs(getTiles()) do
+                    if tile.fg == 0 or tile.bg == 0 then
+                        ::DROPS::
+                        findPath(jammerX + (tileJammer),jammerY)
+                        sleep(1000)
+                        local count = 0
+                        setting.reconnect(world,door,jammerX + (tileJammer),jammerY)
+                        if jammerX + (tileJammer) >= 98 then
+                            jammerY = jammerY - 1
+                            tileJammer = 0
+                        end
+                        while findItem(226) > 0 do
+                            drop(226)
+                            sleep(delaydrop)
+                            setting.reconnect(world,door,jammerX + (tileJammer),jammerY)
+                            count = count + 1
+                            if count >= 2 then
+                                tileJammer = tileJammer + 1
+                                goto DROPS
+                            end
+                        end
+                    end
+                    if findItem(226) == 0 then
+                        break
+                    end
+                end
+            else
+                wrong = false
+                sleep(5000)
+                setting.botinfo("World to storing jammers is wrong door id, terminated sc @everyone")
+                print("World to storing jammers is wrong door id, terminated sc")
+                error()
+            end
+        else
+            nuked = false
+            sleep(5000)
+            setting.botinfo("World to storing jammers is NUKED, terminated sc @everyone")
+            print("World to storing jammers is NUKED, terminated sc")
+            error()
+        end
+    else
+        subserver = false
+        sleep(5000)
+        print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+        setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+        sleep(120000)
+        goto BACK
+    end
+end
+
+setting.pnb = function(name,id)
+    setJob("Pnb")
+    collectSet(false)
+    botX = math.floor(getBot().x / 32)
+    botY = math.floor(getBot().y / 32)
+    if pnbtile == 1 then
+        while findItem(block) >= pnbtile do
+            if getTile(botX,botY + tileY).bg ~= 0 or getTile(botX, botY + tileY).fg ~= 0 then
+                punch(0,tileY)
+                sleep(delaypunch)
+                setting.reconnect(name,id,botX,botY)
+            end
+            if getTile(botX,botY + tileY).bg == 0 or getTile(botX, botY + tileY).fg == 0 then
+                place(block,0,tileY)
+                sleep(delayplace)
+                setting.reconnect(name,id,botX,botY)
+            end
+            if not withgaut then
+                collect(3)
+                sleep(30)
+            end
+            if findItem(seed) >= amountseed then
+                setting.storingseeds()
+                setting.line()
+            elseif findItem(112) >= mingems and buypack then
+                setting.buying()
+                setting.storingpacks()
+                setting.line()
+            end
+        end
+    else
+        while findItem(block) >= pnbtile do
+            while setting.placeitem(botX,botY) do
+                for _,i in pairs(tilebreak) do
+                    if getTile(botX + i,botY + tileY).fg == 0 and getTile(botX + i,botY + tileY).bg == 0 then
+                        place(block,i,tileY)
+                        sleep(delayplace)
+                        setting.reconnect(name,id,botX,botY)
+                    end
+                end
+            end
+            while setting.punchitem(botX,botY) do
+                for _,i in pairs(tilebreak) do
+                    if getTile(botX + i,botY + tileY).fg ~= 0 or getTile(botX + i,botY + tileY).bg ~= 0 then
+                        punch(i,tileY)
+                        sleep(delaypunch)
+                        setting.reconnect(name,id,botX,botY)
+                    end
+                end
+            end
+            if not withgaut then
+                collect(3)
+                sleep(30)
+            end
+            if findItem(seed) >= amountseed then
+                setting.storingseeds()
+                setting.line()
+            elseif findItem(112) >= mingems and buypack then
+                setting.buying()
+                setting.storingpacks()
+                setting.line()
+            end
+        end
+    end
+end
+
+setting.hook = function(varlist)
+	if varlist[0] == "OnDialogRequest" and varlist[1]:find("add_label_with_icon|big|`wUnstable Tesseract``|left|6948|") then
+		if varlist[1]:find("The machine is currently empty!") then 
+            sleep(1000)
+		else
+			amount = varlist[1]:match("The machine contains (%d+)")
+			amounts = 1
+			if tonumber(amount) >= 200 then 
+				amounts = 200 
+			end
+			if tonumber(amount) < 200 then 
+				amounts = tonumber(amount) 
+			end
+            local utpkt = string.format([[action|dialog_return
+            dialog_name|itemsucker_block
+            tilex|%d|
+            tiley|%d|
+            buttonClicked|retrieveitem
+            chk_enablesucking|1
+            ]], varlist[1]:match("tilex|(%d+)"), varlist[1]:match("tiley|(%d+)"))
+            sleep(1000)
+            sendPacket(utpkt,2)
+            sleep(1000)
+            local utpkt = string.format([[action|dialog_return
+            dialog_name|itemremovedfromsucker
+            tilex|%d|
+            tiley|%d|
+            itemtoremove|%d]], varlist[1]:match("tilex|(%d+)") , varlist[1]:match("tiley|(%d+)") , amounts)
+            sleep(1000)
+            sendPacket(utpkt,2)
+            sleep(1000)
+        end
+    end
+	if varlist[0] == "OnDialogRequest" and varlist[1]:find("add_label_with_icon|big|`wGaia's Beacon``|left|6946|") then
+		if varlist[1]:find("The machine is currently empty!") then 
+            sleep(1000)
+		else
+			ammount = varlist[1]:match("The machine contains (%d+)")
+			ammounts = 1
+			if tonumber(ammount) >= 200 then 
+				ammounts = 200 
+			end
+			if tonumber(ammount) < 200 then 
+				ammounts = tonumber(ammount) 
+			end
+            local gaiapkt = string.format([[action|dialog_return
+            dialog_name|itemsucker_seed
+            tilex|%d|
+            tiley|%d|
+            buttonClicked|retrieveitem
+            chk_enablesucking|1
+            ]], varlist[1]:match("tilex|(%d+)") , varlist[1]:match("tiley|(%d+)"))
+            sleep(1000)
+            sendPacket(gaiapkt,2)
+            sleep(1000)
+            local gaiapkt = string.format([[action|dialog_return
+            dialog_name|itemremovedfromsucker
+            tilex|%d|
+            tiley|%d|
+            itemtoremove|%d]], varlist[1]:match("tilex|(%d+)") , varlist[1]:match("tiley|(%d+)") , ammounts)
+            sleep(1000)
+            sendPacket(gaiapkt,2)
+            sleep(1000)
+        end
+	end
+end
+
+addHook("onvariant","retrieve",setting.hook)
+
+setting.setposition = function()
+    ::Here::
+    world = setting.splitt(worldpnb[index],"[^:]+")[1]
+    door = setting.splitt(worldpnb[index],"[^:]+")[2]
+    setJob("Retrieve")
+    setting.warp(world,door,delaywarp)
+    if not subserver then
+        if not nuked then
+            if not wrong then
+                if indexbot == 1 then
+                    for i , tile in pairs(getTiles()) do
+                        if tile.fg == 6948 then
+                            findPath(tile.x,tile.y-1)
+                            sleep(1000)
+                            params.utx = math.floor(getBot().x / 32)
+                            params.uty = math.floor(getBot().y / 32)
+                            sleep(1000)
+                        end
+                    end
+                elseif indexbot == 2  then
+                    for i, tile in pairs(getTiles()) do
+                        if tile.fg == 6946 then
+                            findPath(tile.x,tile.y-1)
+                            sleep(1000)
+                            params.gaiax = math.floor(getBot().x / 32)
+                            params.gaiay = math.floor(getBot().y / 32)
+                            sleep(1000)
+                        end
+                    end
+                end
+            else
+                wrong = false
+                sleep(5000)
+                setting.botinfo("World pnb : [ ||"..world.."|| ] is Wrong door, terminated script @everyone")
+                print("World pnb : [ "..world.." ] is Wrong door, terminated script")
+                error()
+            end
+        else
+            nuked = false
+            sleep(5000)
+            setting.botinfo("World pnb : [ ||"..world.."|| ] is NUKED @everyone")
+            print("World pnb : [ "..world.." ] is NUKED, terminated script")
+            error()
+        end
+    else
+        subserver = false
+        sleep(5000)
+        print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+        setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+        sleep(120000)
+        goto Here
+    end
+end
+
+setting.storingretrieve = function()
+    world = setting.splitt(worldpnb[index],"[^:]+")[1]
+    door = setting.splitt(worldpnb[index],"[^:]+")[2]
+    if indexbot == 2 then
+        for i, tile in pairs(getTiles()) do
+            if tile.fg == 6946 then
+                findPath(tile.x,tile.y - 1)
+                sleep(1000)
+                setting.reconnect(world,door,tile.x,tile.y - 1)
+            end
+            while findItem(seed) > 0 do
+                drop(seed)
+                sleep(delaydrop)
+                move(1,0)
+                sleep(delaydrop)
+            end
+        end
+    elseif indexbot == 1 then
+        for i, tile in pairs(getTiles()) do
+            if tile.fg == 6948 then
+                findPath(tile.x,tile.y - 1)
+                sleep(1000)
+                setting.reconnect(world,door,tile.x,tile.y - 1)
+            end
+            while findItem(block) > 0 do
+                drop(block)
+                sleep(delaydrop)
+                move(1,0)
+                sleep(delaydrop)
+                setting.reconnect(world,door,tile.x,tile.y - 1)
+            end
+        end
+    end
+end
+
+setting.takejammer = function()
+    ::BACK::
+    setJob("Take jammers")
+    world = setting.splitt(worldjammer[index],"[^:]+")[1]
+    door = setting.splitt(worldjammer[index],"[^:]+")[2]
+    setting.warp(world,door,delaywarp)
+    setting.webhookinfo()
+    if not subserver then
+        if not nuked then
+            if not wrong then
+                if setting.itemFloat(226) > 0 then
+                    for _, object in pairs(getObjects()) do
+                        if object.id == 226 then
+                            findPath(math.floor((object.x)/32), math.floor((object.y)/32))
+                            sleep(1000)
+                            collect(2,112)
+                            sleep(1000)
+                            setting.reconnect(world,door,math.floor((object.x)/32), math.floor((object.y)/32))
+                        end
+                        if findItem(226) > 0 then
+                            break
+                        end
+                    end
+                    move(-1,0)
+                    sleep(1000)
+                    drop(226,findItem(226) - 1)
+                    sleep(2000)
+                end
+            else
+                wrong = false
+                sleep(5000)
+                setting.botinfo("World to take jammers is wrong door id, terminated sc @everyone")
+                print("World to take jammers is wrong door id, terminated sc")
+                error()
+            end
+        else
+            nuked = false
+            sleep(5000)
+            setting.botinfo("World to take jammers is NUKED, terminated sc @everyone")
+            print("World to take jammers is NUKED, terminated sc")
+            error()
+        end
+    else
+        subserver = false
+        sleep(5000)
+        print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+        setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+        sleep(120000)
+        goto BACK
+    end
+end
+
+setting.breakjammers = function()
+    for _, world in pairs(worldtotakeback) do
+        setJob("Take back jammer")
+        setting.warp(world,"",delaywarp)
+        if not subserver then
+            if not nuked then
+                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                    move(1,0)
+                    sleep(500)
+                end
+                setting.reconnect(world,"")
+                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) - 1).fg == 226 do
+                    punch(0,-1)
+                    sleep(delaypunch)
+                    setting.reconnect(world,"")
+                end
+            else
+                nuked = false
+                sleep(5000)
+                print("World take back jammer has nuked!!")
+                setting.botinfo("World take back jammer has nuked!! SC Terminated @everyone")
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+        end
+    end
+end
+
+setting.placeall = function()
+    while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) - 1).fg ~= 226 do
+        place(226,0,-1)
+        sleep(delayplace)
+        setting.reconnect(find,"")
+    end
+    sleep(1000)
+    if getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) - 1).fg == 226 then
+        punch(0,-1)
+        sleep(delayplace)
+        setting.reconnect(find,"")
+    end
+end
+
+if Information == "Script made by Caramoy's Syndicate, Link Discord : https://discord.com/invite/fTTKW8vvuq" then
+    setting.webhookinfo()
+    setting.storageinfo()
+    if findItem(9640) > 0 then
+        setting.warp(getBot().name,"",5000)
+        while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) - 1).fg ~= 9640 do
+            place(9640,0,-1)
+            sleep(delayplace)
+        end
+    end
+    if takepickaxe then
+        while findItem(98) == 0 do
+            setting.takepickaxe()
+            sleep(3000)
+        end
+    end
+    if takebackjammer then
+        setting.breakjammers()
+        setting.storingjammer()
+        error()
+    end
+    if pnbotherworld then
+        while findItem(226) == 0 do
+            setting.takejammer()
+            sleep(3000)
+        end
+        ::HERE::
+        setJob("Generating worlds")
+        setting.botinfo("Bot : "..getBot().name.." is generating a new world")
+        setting.warp(find,"",3000)
+        move(1,0)
+        sleep(500)
+        setting.reconnect(find,"")
+        if not subserver then
+            if not nuked then
+                setting.placeall()
+                setting.botinfo("Bot : "..getBot().name.." success generating a new world, the world name is : "..find.."")
+                setting.writeFile("jammer",'"'..find..'",')
+            else
+                nuked = false
+                sleep(5000)
+                print("World generate is NUKED!, check ur world !!")
+                setting.botinfo("World generate is NUKED!, check ur world !! @everyone")
+                goto HERE
+            end
+        else
+            subserver = false
+            sleep(5000)
+            print("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes")
+            setting.botinfo("Bot : "..getBot().name.." system is sub-server, sleeping for 2 minutes @everyone")
+            sleep(120000)
+            goto HERE
+        end
+    end
+    if withgaut then
+        if indexbot == 1 or indexbot == 2 then
+            setting.setposition()
+            while true do
+                if indexbot == 1 then
+                    findPath(params.utx,params.uty)
+                    sleep(delayretrieve)
+                    wrench(0,1)
+                    sleep(delayretrieve*2)
+                    setting.storingretrieve()
+                    setting.reconnect(world,door,params.utx,params.uty)
+                elseif indexbot == 2 then
+                    findPath(params.gaiax,params.gaiay)
+                    sleep(delayretrieve)
+                    wrench(0,1)
+                    sleep(delayretrieve*2)
+                    setting.storingretrieve()
+                    setting.reconnect(world,door,params.gaiax,params.gaiay)
+                end
+            end
+        end
+    end
+    if findItem(block) >= pnbtile then
+        setting.line()
+    else
+        setting.take()
+    end
+else
+    print("Script made by Caramoy's Syndicate, Link Discord : https://discord.com/invite/fTTKW8vvuq")
+    setting.botinfo("Script made by Caramoy's Syndicate, Link Discord : https://discord.com/invite/fTTKW8vvuq")
+end
