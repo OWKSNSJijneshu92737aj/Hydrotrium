@@ -4,6 +4,9 @@ for i, bot in pairs(getBots()) do
     end
 end
 
+setBool("Auto Reconnect",false)
+setBool("Show Place Hand",false)
+setBool("Show Punch Hand",false)
 tilebreak = {}
 infoid = {}
 strings = ""
