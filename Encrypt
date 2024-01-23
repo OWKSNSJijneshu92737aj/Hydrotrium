@@ -91,9 +91,9 @@ setting.recycles = function()
     for i, trash in ipairs(trashList) do
         if findItem(trash) > amount then
 			sendPacket("action|trash\n|itemID|" .. trash,2)
-			sleep(4000)
+			sleep(1000)
 			sendPacket("action|dialog_return\ndialog_name|trash_item\nitemID|" .. trash .. "|\ncount|" .. findItem(trash),2)
-			sleep(4000)
+			sleep(1000)
         end
     end
 end
@@ -226,12 +226,12 @@ setting.webhookinfo = function()
                 username = "Debra's"
                 embeds = @(
                     @{
-                        title = "BOT STATICS"
+                        title = "BOT STATICS [PNB]"
                         color = "]]..math.random(111111,999999)..[["
                         fields = @(
                             @{
                                 name = "TOTAL GEMS & RUNTIME"
-                                value = "]]..""..setting.botgems().." | "..setting.goodtimes(os.difftime(os.time(),params.timechecker))..""..[["
+                                value = "]]..""..setting.botgems().." & "..setting.goodtimes(os.difftime(os.time(),params.timechecker))..""..[["
                                 inline = "false"
                             }
                             @{
@@ -251,7 +251,7 @@ setting.webhookinfo = function()
                             }
                         )
                         footer = @{
-                            text = "PNB Script`n[Hydrotrium] Caramoy's`nLast update : ]]..(os.date("!%a %b %d, %Y at %I:%M %p", os.time() + 7 * 60 * 60))..[["
+                            text = "[Hydrotrium] Caramoy's`nLast update : ]]..(os.date("!%a %b %d, %Y at %I:%M %p", os.time() + 7 * 60 * 60))..[["
                         }
                     }
                 )
@@ -273,7 +273,7 @@ setting.storageinfo = function()
                 username = "Debra's"
                 embeds = @(
                     @{
-                        title = "STORAGE STATICS"
+                        title = "STORAGE STATICS [PNB]"
                         color = "]]..math.random(111111,999999)..[["
                         fields = @(
                             @{
@@ -293,7 +293,7 @@ setting.storageinfo = function()
                             }
                         )
                         footer = @{
-                            text = "PNB Script`n[Hydrotrium] Caramoy's`nLast update : ]]..(os.date("!%a %b %d, %Y at %I:%M %p", os.time() + 7 * 60 * 60))..[["
+                            text = "[Hydrotrium] Caramoy's`nLast update : ]]..(os.date("!%a %b %d, %Y at %I:%M %p", os.time() + 7 * 60 * 60))..[["
                         }
                     }
                 )
@@ -434,7 +434,7 @@ setting.warp = function(world,door,cooldown)
             sleep(cooldown)
         end
         removeHooks()
-        sleep(2000)
+        sleep(1000)
     end
     if getBot().world == string.upper(world) then
         if door ~= "" then
@@ -524,11 +524,11 @@ setting.buying = function()
             if upbackpack then
                 while getBot().slots < 36 do
                     sendPacket("action|buy\nitem|upgrade_backpack",2)
-                    sleep(4000)
+                    sleep(1000)
                 end
             end
             sendPacket("action|buy\nitem|"..debug,2)
-            sleep(2000)
+            sleep(1000)
             if findItem(packList[1]) >= 200 then
                 break
             end
@@ -1563,11 +1563,13 @@ if Information == "Script made by Caramoy's Syndicate, Link Discord : https://di
         setJob("Generating worlds")
         setting.botinfo("Bot : "..getBot().name.." is generating a new world")
         setting.warp(find,"",3000)
-        move(1,0)
-        sleep(500)
-        setting.reconnect(find,"")
         if not subserver then
             if not nuked then
+                while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+                    move(1,0)
+                    sleep(500)
+                end
+                setting.reconnect(find,"")
                 setting.placeall()
                 setting.botinfo("Bot : "..getBot().name.." success generating a new world, the world name is : "..find.."")
                 setting.writeFile("jammer",'"'..find..'",')
@@ -1604,7 +1606,7 @@ if Information == "Script made by Caramoy's Syndicate, Link Discord : https://di
                     wrench(0,1)
                     sleep(delayretrieve*2)
                     setting.storingretrieve()
-                    setting.reconnect(world,door,params.gaiax,params.gaiay)
+                    setting.reconnect(world,door,params.utx,params.uty)
                 end
             end
         end
